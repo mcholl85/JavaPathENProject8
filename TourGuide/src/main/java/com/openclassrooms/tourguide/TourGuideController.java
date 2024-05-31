@@ -5,6 +5,8 @@ import java.util.List;
 import com.openclassrooms.tourguide.dto.NearAttractionsDTO;
 import com.openclassrooms.tourguide.service.RewardsService;
 import gpsUtil.location.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,7 +25,7 @@ import tripPricer.Provider;
 
 @RestController
 public class TourGuideController {
-
+    private final Logger logger = LoggerFactory.getLogger(TourGuideController.class);
 	@Autowired
 	TourGuideService tourGuideService;
     @Qualifier("rewardsService")
@@ -56,7 +58,7 @@ public class TourGuideController {
     	VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName));
         List<Attraction> nearAttractions = tourGuideService.getNearByAttractions(visitedLocation);
 
-    	return nearAttractions.stream().map(attraction -> {
+    	return nearAttractions.stream().parallel().map(attraction -> {
             double distance = rewardsService.getDistance(attraction, visitedLocation.location);
             int rewardPoints = getRewardCentral.getAttractionRewardPoints(attraction.attractionId, visitedLocation.userId);
 
