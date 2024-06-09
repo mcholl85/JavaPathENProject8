@@ -2,9 +2,7 @@ package com.openclassrooms.tourguide.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 import org.springframework.stereotype.Service;
 
@@ -54,6 +52,27 @@ public class RewardsService {
 				}
 			}
 		}
+	}
+
+	public void calculateRewards(List<User> users) {
+		List<Attraction> attractions = gpsUtil.getAttractions();
+
+		List<CompletableFuture<Void>> futures = new ArrayList<>(users.size());
+
+		for(User user : users) {
+			CopyOnWriteArrayList<VisitedLocation> userLocations = new CopyOnWriteArrayList<>(user.getVisitedLocations());
+
+			for(VisitedLocation visitedLocation : userLocations) {
+				for(Attraction attraction : attractions) {
+					if (user.getUserRewards().stream().noneMatch(r -> r.attraction.attractionName.equals(attraction.attractionName)) && nearAttraction(visitedLocation, attraction)) {
+						CompletableFuture<Void> future = CompletableFuture.runAsync(() -> user.addUserReward(new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user))), executorService);
+						futures.add(future);
+					}
+				}
+			}
+		}
+
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 	}
 
 	public CompletableFuture<Void> calculateRewardsAsync(User user) {
