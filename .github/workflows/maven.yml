@@ -30,3 +30,8 @@ jobs:
     - name: Build with Maven
       working-directory: ./TourGuide
       run: mvn -B package --file pom.xml
+    - name: Upload JAR file
+      uses: actions/upload-artifact@v3
+      with:
+        name: tour-guide-jar
+        path: ./TourGuide/target/*.jar
